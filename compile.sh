@@ -1,1 +1,1 @@
-gcc -o slayer main.cpp -lglut -lGLU -lGL
+g++ src/main.cpp -lglut -lGLU -lGL -lIL -lILU -lILUT -o slayer
