@@ -1,22 +1,20 @@
 
+#include "box.cpp"
+
 typedef struct Player {
-	float x, y;
+	float x, y, move_x, move_y;
 } Player;
 
 Player player;
+Box* boxes = (Box*) malloc(sizeof(Box) * 64);
 
-void load_texture(std::string filename, unsigned int* texture_id){
-	unsigned int tex_id;
-	ilGenImages(1, &tex_id);
-	ilBindImage(tex_id);
-	ilLoadImage(filename.c_str());
-	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
-	glGenTextures(1, texture_id);
-	glBindTexture(GL_TEXTURE_2D, *texture_id);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, ilGetInteger(IL_IMAGE_BPP), ilGetInteger(IL_IMAGE_WIDTH),ilGetInteger(IL_IMAGE_HEIGHT), 0, ilGetInteger(IL_IMAGE_FORMAT), GL_UNSIGNED_BYTE,ilGetData());
-	ilDeleteImages(1, &tex_id);
+void draw_string(float x, float y, std::string text){
+	glRasterPos2f(x, y);
+	glutBitmapString(GLUT_BITMAP_HELVETICA_12, (unsigned char*) (text.c_str()));
+}
+
+void translate_player(){
+	glTranslatef(-player.x, -player.y, 0);
 }
 
 void game_init(GameState* gamestate){
@@ -25,35 +23,49 @@ void game_init(GameState* gamestate){
 	ilutRenderer(ILUT_OPENGL);
 	
 	load_texture("res/player.png", &(gamestate->textures[0]));
+	create_box(&boxes[0], 100, 30, 32, 32);
 }
 
 void game_update(GameState* gamestate){
-	if(gamestate->keys['w']) gamestate->y += 4;
-	if(gamestate->keys['s']) gamestate->y -= 4;
-	if(gamestate->keys['a']) gamestate->x -= 4;
-	if(gamestate->keys['d']) gamestate->x += 4;
+	if(gamestate->keys['w']) player.y += 4;
+	if(gamestate->keys['s']) player.y -= 4;
+	if(gamestate->keys['a']) player.x -= 4;
+	if(gamestate->keys['d']) player.x += 4;
+	
 }
 
 void game_render(GameState* gamestate){
+	translate_player();
+	//Draw boxes
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glColor3f(1, 0, 0);
+	draw_box(&boxes[0]);
+	
+	//Draw text
+	/*unsigned char* s = (unsigned char*) "there is no spoon.";
+	glRasterPos2f(player.x + WIDTH/2, player.y + HEIGHT/2 - 50);
+	glutBitmapString(GLUT_BITMAP_HELVETICA_12, s);
+	*/
+	draw_string(90,62, "hello world!");
 
+	//Draw player
+	glLoadIdentity();
+	glTranslatef(WIDTH/2, HEIGHT/2, 0);
 	glColor3f(1,1,1);
 	glBindTexture(GL_TEXTURE_2D, gamestate->textures[0]);
+	
 	glBegin(GL_QUADS);
 	glTexCoord2f(0,0);
-	glVertex2f(gamestate->x,gamestate->y);
+	glVertex2f(-16, -16);
 	glTexCoord2f(1,0);
-	glVertex2f(gamestate->x+32,gamestate->y);
+	glVertex2f(16,-16);
 	glTexCoord2f(1,1);
-	glVertex2f(gamestate->x+32,gamestate->y+32);
+	glVertex2f(16,16);
 	glTexCoord2f(0,1);
-	glVertex2f(gamestate->x,gamestate->y+32);
+	glVertex2f(-16,16);
 	glEnd();
-	
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBegin(GL_QUADS);
-	glVertex2f(gamestate->mouse_x,gamestate->mouse_y);
-	glVertex2f(gamestate->mouse_x+10,gamestate->mouse_y);
-	glVertex2f(gamestate->mouse_x+10,gamestate->mouse_y+10);
-	glVertex2f(gamestate->mouse_x,gamestate->mouse_y+10);
-	glEnd();
+}
+
+void game_destroy(GameState* gamestate){
+	free(boxes);
 }
