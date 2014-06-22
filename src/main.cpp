@@ -6,9 +6,13 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include <cmath>
+#include <time.h>
 #include <IL/il.h>
 #include <IL/ilu.h>
 #include <IL/ilut.h>
+
+#define PI 3.14159
 
 const int WIDTH = 800, HEIGHT = 600;
 const int WORLD_WIDTH = 2048, WORLD_HEIGHT = 2048;
@@ -16,11 +20,19 @@ const int WORLD_WIDTH = 2048, WORLD_HEIGHT = 2048;
 typedef struct GameState {
 	int mouse_x, mouse_y;
 	bool keys[256];
+	bool LMB_DOWN, RMB_DOWN;
 	float x, y;
 	unsigned int textures[32];
+	unsigned int weapon_textures[16];
+	time_t current_time;
+	
 } GameState;
 
 GameState* gamestate = (GameState*) malloc(sizeof(GameState));
+
+float random_float(){
+	return ((float)(rand() % 100000)) / 100000.0;
+}
 
 #include "texture_loader.cpp"
 /*
@@ -41,6 +53,8 @@ void init(){
 	gamestate->y = 10;
 	
 	game_init(gamestate);
+	
+	srand(time(NULL));
 }
 
 void initGL(){
@@ -60,6 +74,7 @@ void clearScreen(){
 }
 
 void update(){
+	time(&gamestate->current_time);
 	game_update(gamestate);
 }
 
@@ -81,6 +96,13 @@ void keyReleased(unsigned char key, int x, int y){
 	gamestate->keys[key] = false;
 }
 
+void mouseEvent(int button, int state, int x, int y){
+	gamestate->LMB_DOWN = button == GLUT_LEFT_BUTTON && state == GLUT_DOWN;
+	gamestate->RMB_DOWN = button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN;
+	gamestate->mouse_x = x;
+	gamestate->mouse_y = HEIGHT - y;
+}
+
 void mouseMotion(int x, int y){
 	gamestate->mouse_x = x;
 	gamestate->mouse_y = HEIGHT - y;
@@ -99,6 +121,8 @@ int main(int argc, char** argv){
 	glutIdleFunc(&render);
 	glutKeyboardFunc(&keyPressed);
 	glutKeyboardUpFunc(&keyReleased);
+	glutMouseFunc(&mouseEvent);
+	glutMotionFunc(&mouseMotion);
 	glutPassiveMotionFunc(&mouseMotion);
 	
 	glutMainLoop();
